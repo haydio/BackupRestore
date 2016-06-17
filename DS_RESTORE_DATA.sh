@@ -146,7 +146,7 @@ if [[ -e "$DS_REPOSITORY_BACKUPS" ]]; then
 	# Set backup count to number of tar files in backup repository - Contributed by Rhon Fitzwater
 	# Updated grep contributed by Alan McSeveney <alan@themill.com>
 	# export DS_BACKUP_COUNT=`/bin/ls -l "$DS_REPOSITORY_BACKUPS" | grep -E '\.(tar|zip)$' | wc -l`
-	export DS_BACKUP_COUNT=`/bin/ls -l "$DS_REPOSITORY_BACKUPS" | grep -E '.*\.tar|.*\.zip' | wc -l`
+	export DS_BACKUP_COUNT=`/bin/ls -l "$DS_REPOSITORY_BACKUPS" | grep -E '.*\.tar|.*\.zip|.*\.dmg' | wc -l`
 else
 	echo "Could not find $DS_REPOSITORY_BACKUPS"
 fi
@@ -271,6 +271,15 @@ case $RESTORE_TOOL in
 			USERZ=`echo $(basename $i)|awk -F'.' '{print $1}'`
 			echo " >>Restore From: $i Restore To: $DS_LAST_RESTORED_VOLUME$DS_USER_PATH/"
 			/usr/bin/ditto -x "$i" "$DS_LAST_RESTORED_VOLUME$DS_USER_PATH/"
+			RUNTIME_ABORT "RuntimeAbortWorkflow: Could not restore home folder for $USERZ using ditto...exiting." "\t +home restored successfully"
+		done
+		;;
+	dmg )
+		for i in "$DS_REPOSITORY_BACKUPS"/*HOME.dmg; do
+			USERZ=`echo $(basename $i)|awk -F'-' '{print $1}'`
+			echo " >>Restore From: $i Restore To: $DS_LAST_RESTORED_VOLUME$DS_USER_PATH/"
+			/usr/bin/hdiutil attach "$i"
+			/usr/bin/ditto /Volumes/"$USERZ" "$DS_LAST_RESTORED_VOLUME$DS_USER_PATH/$USERZ"
 			RUNTIME_ABORT "RuntimeAbortWorkflow: Could not restore home folder for $USERZ using ditto...exiting." "\t +home restored successfully"
 		done
 # 		;;
